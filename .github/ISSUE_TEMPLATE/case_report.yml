@@ -1,0 +1,112 @@
+name: "🩺 Skill Failure Case Report"
+description: "Submit a skill failure case for the community database"
+title: "[FAILURE_TYPE] SKILL_NAME — PLATFORM"
+labels: ["case-report", "unverified"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Privacy Reminder
+        
+        ⚠️ Do NOT include any business content, file names, URLs, company names,
+        client data, or personal information. Describe only the **engineering** 
+        failure pattern.
+        
+        ✅ Good: "Text report request triggered spreadsheet skill"
+        ❌ Bad: "Q3 ACME Corp sales report triggered xlsx"
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options:
+        - claude-code
+        - claude-ai
+        - openclaw
+        - codex
+        - cursor
+        - gemini-cli
+        - other
+    validations:
+      required: true
+
+  - type: input
+    id: skill_triggered
+    attributes:
+      label: Skill Triggered
+      description: "Name of the skill that was triggered (or 'none')"
+      placeholder: "e.g., xlsx, pdf, frontend-design"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: failure_type
+    attributes:
+      label: Failure Type
+      options:
+        - wrong_skill_selected
+        - skill_conflict
+        - skill_not_triggered
+        - tool_error
+        - environment_issue
+        - context_overflow
+        - description_mismatch
+        - should_use_hook
+        - output_quality
+        - unknown
+    validations:
+      required: true
+
+  - type: textarea
+    id: failure_signature
+    attributes:
+      label: Failure Signature
+      description: "Abstract engineering description (1-2 sentences, NO business content)"
+      placeholder: "e.g., Task requiring markdown output triggered spreadsheet skill due to keyword overlap"
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: "Model, OS, and any relevant context"
+      placeholder: |
+        Model: claude-sonnet-4-6
+        OS: macos
+        Other active skills: docx, pdf, xlsx
+        Notes: long conversation, 15+ turns
+
+  - type: textarea
+    id: user_correction
+    attributes:
+      label: User Correction
+      description: "What the user did to fix or work around the issue (abstracted)"
+      placeholder: "e.g., User manually specified markdown output format"
+
+  - type: textarea
+    id: remedy
+    attributes:
+      label: Recommended Remedy
+      description: "What should be done differently to prevent this failure"
+      placeholder: "e.g., xlsx skill description should require explicit spreadsheet/Excel keywords, not trigger on 'table' alone"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: confidence
+    attributes:
+      label: Diagnosis Confidence
+      options:
+        - high
+        - medium
+        - low
+    validations:
+      required: true
+
+  - type: textarea
+    id: full_json
+    attributes:
+      label: Full Case JSON (optional)
+      description: "If submitted by skill-doctor, the full redacted JSON will be here"
+      render: json

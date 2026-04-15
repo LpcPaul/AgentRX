@@ -1,0 +1,151 @@
+name: Validate Case Report
+
+on:
+  issues:
+    types: [opened, edited]
+
+jobs:
+  validate:
+    if: contains(github.event.issue.labels.*.name, 'case-report')
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Extract JSON from issue body
+        id: extract
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = context.payload.issue.body || '';
+            
+            // Try to find JSON block in the issue body
+            const jsonMatch = body.match(/```json\s*\n([\s\S]*?)\n```/);
+            
+            if (jsonMatch) {
+              const fs = require('fs');
+              fs.writeFileSync('/tmp/case_from_issue.json', jsonMatch[1]);
+              core.setOutput('has_json', 'true');
+            } else {
+              core.setOutput('has_json', 'false');
+            }
+
+      - name: Run redaction check on JSON
+        if: steps.extract.outputs.has_json == 'true'
+        id: redact
+        run: |
+          RESULT=$(python3 scripts/redact.py --input /tmp/case_from_issue.json --dry-run 2>&1) || EXIT_CODE=$?
+          echo "result<<EOF" >> $GITHUB_OUTPUT
+          echo "$RESULT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          echo "exit_code=${EXIT_CODE:-0}" >> $GITHUB_OUTPUT
+
+      - name: Check issue text for sensitive patterns
+        id: text_check
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = context.payload.issue.body || '';
+            const warnings = [];
+            
+            // Check for email patterns
+            if (/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/.test(body)) {
+              warnings.push('⚠️ Possible email address detected');
+            }
+            
+            // Check for API keys
+            if (/(?:sk|pk|api|key|token|secret|bearer)[_-]?[a-zA-Z0-9]{16,}/i.test(body)) {
+              warnings.push('🔴 Possible API key or secret detected');
+            }
+            
+            // Check for business content keywords
+            if (/\b(Q[1-4]\s*\d{2,4}|revenue|client\s+name|customer\s+data|confidential)\b/i.test(body)) {
+              warnings.push('⚠️ Possible business content detected');
+            }
+            
+            // Check for file paths
+            const pathMatches = body.match(/(?:\/[\w.-]+){3,}/g) || [];
+            const nonSkillPaths = pathMatches.filter(p => !p.startsWith('/mnt/skills/'));
+            if (nonSkillPaths.length > 0) {
+              warnings.push('⚠️ File paths detected (may contain project structure info)');
+            }
+            
+            core.setOutput('warnings', JSON.stringify(warnings));
+            core.setOutput('warning_count', warnings.length);
+
+      - name: Post validation comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const hasJson = '${{ steps.extract.outputs.has_json }}' === 'true';
+            const redactResult = `${{ steps.redact.outputs.result }}`;
+            const redactExit = '${{ steps.redact.outputs.exit_code }}';
+            const warnings = JSON.parse('${{ steps.text_check.outputs.warnings }}');
+            
+            let comment = '## 🩺 Skill Doctor — Automated Validation\n\n';
+            
+            // JSON validation
+            if (hasJson) {
+              if (redactExit === '0') {
+                comment += '✅ **JSON case data**: Schema valid, no sensitive content detected\n\n';
+              } else if (redactExit === '1') {
+                comment += '⚠️ **JSON case data**: Some content was flagged for review\n\n';
+                comment += '```\n' + redactResult + '\n```\n\n';
+              } else if (redactExit === '2') {
+                comment += '❌ **JSON case data**: BLOCKED — too much sensitive content\n\n';
+                comment += '```\n' + redactResult + '\n```\n\n';
+              }
+            } else {
+              comment += 'ℹ️ No embedded JSON found (manual submission)\n\n';
+            }
+            
+            // Text warnings
+            if (warnings.length > 0) {
+              comment += '### Privacy Warnings\n\n';
+              warnings.forEach(w => { comment += `- ${w}\n`; });
+              comment += '\nPlease review and edit the issue to remove any sensitive content.\n\n';
+            } else {
+              comment += '✅ **Text content**: No obvious sensitive patterns detected\n\n';
+            }
+            
+            // Final status
+            const blocked = redactExit === '2';
+            const hasWarnings = warnings.length > 0 || redactExit === '1';
+            
+            if (blocked) {
+              comment += '---\n🔴 **Status: BLOCKED** — This case needs significant revision before it can be merged.\n';
+            } else if (hasWarnings) {
+              comment += '---\n🟡 **Status: REVIEW NEEDED** — A maintainer should check the flagged items before merging.\n';
+            } else {
+              comment += '---\n🟢 **Status: READY FOR REVIEW** — No issues detected. A maintainer can merge this into `cases/`.\n';
+            }
+            
+            // Add labels
+            const labelsToAdd = [];
+            if (blocked) labelsToAdd.push('privacy-blocked');
+            if (hasWarnings && !blocked) labelsToAdd.push('needs-review');
+            if (!blocked && !hasWarnings) labelsToAdd.push('ready-to-merge');
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: comment
+            });
+            
+            if (labelsToAdd.length > 0) {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                labels: labelsToAdd
+              });
+            }

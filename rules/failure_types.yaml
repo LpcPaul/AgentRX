@@ -1,0 +1,128 @@
+# Skill Doctor — Failure Type Taxonomy
+# 
+# This file defines the canonical failure types, their signals,
+# and the default diagnostic path for each.
+
+failure_types:
+
+  wrong_skill_selected:
+    description: "A skill was triggered but was not the right fit for the task"
+    signals:
+      - "Output format doesn't match what user requested"
+      - "User immediately asks for a different approach"
+      - "Skill name is semantically close but functionally wrong"
+    common_causes:
+      - "Skill description too broad"
+      - "Ambiguous keywords in user request match multiple skills"
+      - "Skill priority/override order caused wrong selection"
+    default_remedy: "switch_skill"
+    examples:
+      - "xlsx triggered when user wanted markdown table"
+      - "pdf skill activated when user wanted to read a PDF (should be pdf-reading)"
+      - "docx triggered for a simple text response"
+
+  skill_conflict:
+    description: "Two or more skills competed for the same task"
+    signals:
+      - "Agent hesitated or switched skills mid-task"
+      - "Description overlap between loaded skills"
+      - "Same-name skills at different priority levels"
+    common_causes:
+      - "Multiple skills with overlapping description keywords"
+      - "Enterprise/personal/project skill name collision"
+      - "Plugin namespace not properly isolated"
+    default_remedy: "update_description"
+
+  skill_not_triggered:
+    description: "No skill was activated when one should have been"
+    signals:
+      - "Agent attempted task from scratch without skill guidance"
+      - "Output lacks the quality/structure that the skill provides"
+      - "User had to manually invoke /skill-name"
+    common_causes:
+      - "Skill description too narrow"
+      - "User request phrasing doesn't match skill keywords"
+      - "Skill set to disable-model-invocation but user expected auto-trigger"
+    default_remedy: "update_description"
+
+  tool_error:
+    description: "The skill triggered correctly but an underlying tool/command failed"
+    signals:
+      - "Shell command returned non-zero exit code"
+      - "Python/Node script threw an exception"
+      - "API call returned error response"
+    common_causes:
+      - "Missing dependency or package"
+      - "Permission denied on file/directory"
+      - "Network request failed (timeout, DNS, auth)"
+      - "Script bug in skill's bundled code"
+    default_remedy: "not_skill_issue"
+
+  environment_issue:
+    description: "Failure caused by permissions, missing packages, network, or OS"
+    signals:
+      - "Works on one platform but not another"
+      - "Permission denied errors"
+      - "Package not found / import errors"
+    common_causes:
+      - "claude.ai sandbox has no network / no pip install"
+      - "Claude Code has full access but CI runner doesn't"
+      - "OpenClaw skill assumes tools not in current workspace"
+      - "Windows vs Unix path handling"
+    default_remedy: "not_skill_issue"
+
+  context_overflow:
+    description: "Skill instructions were truncated or lost due to context length"
+    signals:
+      - "Skill behavior degrades in long conversations"
+      - "Agent seems to forget skill instructions mid-task"
+      - "Partial or incomplete skill execution"
+    common_causes:
+      - "Too many skills loaded simultaneously"
+      - "Very long conversation history"
+      - "Skill SKILL.md is too verbose"
+    default_remedy: "change_skill_params"
+
+  description_mismatch:
+    description: "Skill's description doesn't accurately reflect what it actually does"
+    signals:
+      - "Skill triggered for right-sounding tasks but fails to deliver"
+      - "Description promises capabilities the skill doesn't have"
+      - "Skill works well but never gets triggered because description is too vague"
+    common_causes:
+      - "Description written for marketing, not for agent routing"
+      - "Skill evolved but description wasn't updated"
+      - "Description uses jargon the model doesn't associate with the task"
+    default_remedy: "update_description"
+
+  should_use_hook:
+    description: "This task needs deterministic control (hook), not model judgment (skill)"
+    signals:
+      - "Task must happen EVERY time, not just when model decides"
+      - "Inconsistent execution — sometimes runs, sometimes doesn't"
+      - "Critical side effects (deploy, send message, commit)"
+    common_causes:
+      - "Using skill for what should be a pre/post-commit hook"
+      - "Linting/formatting should be deterministic, not optional"
+      - "Security checks should never be model-optional"
+    default_remedy: "use_hook"
+
+  output_quality:
+    description: "Skill ran but output quality was poor or unstable"
+    signals:
+      - "Output is technically correct but not useful"
+      - "Formatting, structure, or completeness issues"
+      - "Results vary significantly between runs"
+    common_causes:
+      - "Skill instructions too vague"
+      - "Missing examples or templates in skill"
+      - "Model capability insufficient for skill's demands"
+    default_remedy: "change_skill_params"
+
+  unknown:
+    description: "Cannot determine failure type with available information"
+    signals:
+      - "Failure is intermittent and hard to reproduce"
+      - "Multiple possible causes with equal likelihood"
+      - "Insufficient context to diagnose"
+    default_remedy: "other"
