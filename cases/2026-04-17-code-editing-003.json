@@ -1,0 +1,65 @@
+{
+  "schema_version": "2.1",
+  "id": "2026-04-17-code-editing-003",
+  "title": "code-editing recover-from-failure recovery_gap",
+  "summary": "Agent encountered an intermittent test failure that only reproduces 30% of the time. Multiple retry attempts produced inconsistent results, making root cause identification impossible.",
+  "created_at": "2026-04-17T00:00:00Z",
+  "tags": [
+    "code-editing",
+    "recover-from-failure",
+    "recovery_gap",
+    "flaky-test"
+  ],
+  "evidence": {
+    "task": "code-editing",
+    "desired_outcome": "Fix a failing unit test in the authentication module.",
+    "attempted_path": {
+      "tool": "code-editing",
+      "tool_type": "skill",
+      "other_tools": []
+    },
+    "symptom": "The test fails intermittently — approximately 30% of runs produce a timeout error. When it passes, the agent cannot determine which change fixed it.",
+    "symptom_tags": [
+      "intermittent-failure",
+      "timeout"
+    ],
+    "context": "The test involves an async HTTP call with a 5-second timeout. Network latency in the test environment may be a factor.",
+    "environment": {
+      "platform": "claude-code",
+      "requires_login": false,
+      "requires_dynamic_render": false,
+      "requires_local_filesystem": true,
+      "requires_network": true,
+      "requires_deterministic_execution": false,
+      "notes": "Test environment has variable network conditions."
+    },
+    "failed_step": "Unit test times out intermittently (~30% failure rate)",
+    "artifacts_used": [
+      "test file",
+      "source code"
+    ],
+    "reproduction_steps": [
+      "Ran test 5 times — failed 2 times with timeout",
+      "Modified retry logic — passed 3 times, failed 2 times",
+      "Increased timeout — passed 4 times, failed 1 time"
+    ]
+  },
+  "inference": {
+    "journey_stage": "recover-from-failure",
+    "problem_family": "recovery_gap",
+    "why_current_path_failed": "The intermittent nature of the failure makes it impossible to determine if a code change actually fixed the issue. The agent needs a reliable reproduction method before attempting fixes.",
+    "best_candidate_route_id": "switch_to_repro_minimization",
+    "best_candidate_route_detail": "Create a minimal reproduction script that isolates the async HTTP call and runs it repeatedly to confirm the failure pattern. Then test fixes against this reproducible setup rather than the full test suite.",
+    "prerequisites_for_switch": [
+      "repo_access"
+    ],
+    "confidence": "medium"
+  },
+  "resolution": {
+    "outcome": "partially_resolved",
+    "follow_up_notes": "Isolated the HTTP call in a minimal script. Confirmed timeout correlates with network latency spikes. Fix pending."
+  },
+  "verified": false,
+  "related_cases": [],
+  "legacy_mapping": {}
+}

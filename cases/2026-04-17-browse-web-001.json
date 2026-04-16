@@ -1,0 +1,77 @@
+{
+  "schema_version": "2.1",
+  "id": "2026-04-17-browse-web-001",
+  "title": "browse-web execute-task capability_mismatch",
+  "summary": "Agent used a static HTML fetch tool for a dynamically rendered page. Only the shell was captured, missing all content populated by JavaScript.",
+  "created_at": "2026-04-17T00:00:00Z",
+  "tags": [
+    "browse-web",
+    "execute-task",
+    "capability_mismatch",
+    "dynamic-rendering"
+  ],
+  "evidence": {
+    "task": "browse-web",
+    "desired_outcome": "Extract the full product listing table from a retail website.",
+    "attempted_path": {
+      "tool": "web_fetch",
+      "tool_type": "builtin",
+      "other_tools": [
+        {
+          "name": "playwright-mcp",
+          "type": "mcp",
+          "role": "candidate alternative"
+        },
+        {
+          "name": "browser-cdp",
+          "type": "skill",
+          "role": "candidate alternative"
+        }
+      ]
+    },
+    "symptom": "The fetched HTML only contains the page skeleton. All product data loaded via JavaScript is missing.",
+    "symptom_tags": [
+      "partial-content",
+      "client-side-rendering"
+    ],
+    "context": "The target website is a modern single-page application that loads product data via API after the initial HTML loads.",
+    "environment": {
+      "platform": "claude-code",
+      "requires_login": false,
+      "requires_dynamic_render": true,
+      "requires_local_filesystem": false,
+      "requires_network": true,
+      "requires_deterministic_execution": false,
+      "notes": "Client-side rendering detected."
+    },
+    "failed_step": "Static HTML fetch returned page skeleton without JavaScript-rendered content",
+    "artifacts_used": [
+      "HTML page",
+      "public URL"
+    ],
+    "reproduction_steps": [
+      "Used web_fetch builtin to retrieve the page",
+      "Parsed HTML — found only skeleton structure, no product data",
+      "Retried with same approach — same result"
+    ]
+  },
+  "inference": {
+    "journey_stage": "execute-task",
+    "problem_family": "capability_mismatch",
+    "why_current_path_failed": "The builtin fetch tool retrieves static HTML only. The product data on this page is rendered client-side via JavaScript, which static fetch cannot execute.",
+    "best_candidate_route_id": "switch_to_alternative_tool_path",
+    "best_candidate_route_detail": "Switch to a browser-capable route that executes JavaScript. playwright-mcp can render the page and extract the full DOM. Alternatively, browser-cdp skill with explicit wait-for-content logic.",
+    "prerequisites_for_switch": [
+      "internet_access",
+      "repo_access"
+    ],
+    "confidence": "high"
+  },
+  "resolution": {
+    "outcome": "resolved",
+    "follow_up_notes": "Switched to playwright-mcp which rendered the page and extracted the complete product table."
+  },
+  "verified": false,
+  "related_cases": [],
+  "legacy_mapping": {}
+}

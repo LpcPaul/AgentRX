@@ -1,0 +1,66 @@
+{
+  "schema_version": "2.1",
+  "id": "2026-04-17-create-presentation-001",
+  "title": "create-presentation choose-capability task_framing_issue",
+  "summary": "Agent was asked to create a presentation but received no content outline, speaker notes, or design preferences. Multiple attempts to generate content were all rejected.",
+  "created_at": "2026-04-17T00:00:00Z",
+  "tags": [
+    "create-presentation",
+    "choose-capability",
+    "task_framing_issue",
+    "missing-input"
+  ],
+  "evidence": {
+    "task": "create-presentation",
+    "desired_outcome": "Generate a slide deck for a quarterly business review.",
+    "attempted_path": {
+      "tool": "pptx-generator",
+      "tool_type": "skill",
+      "other_tools": [
+        {
+          "name": "markdown-slides",
+          "type": "skill",
+          "role": "format alternative"
+        }
+      ]
+    },
+    "symptom": "Every generated slide deck is rejected by the user for being too generic, wrong tone, or missing key metrics.",
+    "symptom_tags": [
+      "output-rejected",
+      "generic-content"
+    ],
+    "context": "The user's request was a single sentence: 'Create a Q4 review deck.' No outline, no data, no design preferences were provided.",
+    "environment": {
+      "platform": "claude-ai",
+      "requires_login": false,
+      "requires_dynamic_render": false,
+      "requires_local_filesystem": false,
+      "requires_network": false,
+      "requires_deterministic_execution": false,
+      "notes": "No supporting materials available."
+    },
+    "failed_step": "Generated three different slide deck drafts, all rejected",
+    "artifacts_used": [],
+    "reproduction_steps": [
+      "Generated generic Q4 deck — rejected as too generic",
+      "Tried more data-heavy approach — rejected for wrong tone",
+      "Switched to markdown slides — rejected for wrong format"
+    ]
+  },
+  "inference": {
+    "journey_stage": "choose-capability",
+    "problem_family": "task_framing_issue",
+    "why_current_path_failed": "The task is underspecified. The agent cannot produce a satisfactory presentation without knowing the audience, key metrics, design preferences, or outline. Continuing to generate drafts is wasted effort.",
+    "best_candidate_route_id": "request_missing_input",
+    "best_candidate_route_detail": "Ask the user for: (1) key metrics or data points to include, (2) target audience, (3) preferred tone and design style, (4) any existing outline or reference deck.",
+    "prerequisites_for_switch": [],
+    "confidence": "high"
+  },
+  "resolution": {
+    "outcome": "resolved",
+    "follow_up_notes": "User provided an outline and three key metrics. Presentation generated successfully on second attempt."
+  },
+  "verified": false,
+  "related_cases": [],
+  "legacy_mapping": {}
+}

@@ -36,7 +36,7 @@ AgentRX: You hit a `capability_mismatch` at the execute-task stage.
                                 (clicks, scrolls, form fills)
 
          Prescription: switch to web-access.
-         Confidence: high. Based on 8 similar cases in cases/web-browsing/.
+         Confidence: high.
 ```
 
 This is what AgentRX does: turns a stuck state into a structured next-step decision.
@@ -168,6 +168,22 @@ git clone https://github.com/LpcPaul/AgentRX.git ~/.codex/skills/agentrx
 
 ---
 
+## What changes after installation?
+
+After you clone AgentRX into your skill directory, nothing changes on your end.
+Your AI agent gains a new capability it can activate when stuck.
+Over time, as cases are contributed, the library grows and retrieval quality improves.
+
+The case library starts small and grows through accumulated AI experience:
+
+| What you install today | What you get over time |
+|---|---|
+| 10 golden cases across 10 route types | Growing collection of real stuck-state diagnoses |
+| Structured schema + route registry | Richer context for AI-to-AI knowledge transfer |
+| Self-evolution loop ready | Future AI agents benefit from past recoveries |
+
+---
+
 ## What changed from the old version
 
 ### Old model (v1 — Skill Doctor)
@@ -192,6 +208,7 @@ git clone https://github.com/LpcPaul/AgentRX.git ~/.codex/skills/agentrx
 | [SKILL.md](SKILL.md) | The runtime prompt that the AI agent reads when activated |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | System design — why AI-only, why evidence/inference, why route ids |
 | [docs/INTAKE_CARD.md](docs/INTAKE_CARD.md) | The structured format AI uses to translate stuck states into queries |
+| [docs/AI_SELF_EVOLUTION.md](docs/AI_SELF_EVOLUTION.md) | The self-evolution loop — how the library grows over time |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | How cases enter the system — default contributor is AI |
 | [cases/README.md](cases/README.md) | Case library structure and indexing |
 
