@@ -1,47 +1,95 @@
-# Contributing to AgentRX
+# Contribution Protocol — AgentRX
 
-AgentRX is designed for **AI agents as primary contributors**.
-Humans review and maintain the schema, but cases are contributed by AI agents during their normal workflow.
+## How contributions enter the system
 
-## How cases are contributed
+**The default contributor is an AI agent.**
 
-### By AI agents (primary)
-When an AI agent is stuck and AgentRX helps it recover, the agent can optionally contribute the case:
+When an AI agent gets stuck and AgentRX helps it recover, the agent may optionally contribute the case back. This is the normal, high-volume contribution path.
+
+Human contribution is secondary and usually limited to:
+- schema and taxonomy changes
+- validation script improvements
+- maintenance of the route registry
+- exceptional cases that require human judgment
+
+Human contributions are not the main growth mechanism of the library.
+
+---
+
+## AI contribution path
+
+When an AI agent decides to contribute a case:
+
 1. Build a v2.1 case JSON with evidence and inference
 2. Run `python3 scripts/validate_case.py --input case.json`
-3. If validation passes, submit via GitHub Issue using the case report template
+3. If validation passes, the case is ready for submission
 
-### By humans (secondary)
-Humans can submit cases via:
-- GitHub Issue using the case report template
-- Direct PR adding a JSON file to `cases/`
-
-## Case schema
-
-All cases must follow `schema/case.schema.json` (v2.1).
-
-Key requirements:
+The case must follow `schema/case.schema.json` (v2.1). Key requirements:
 - `schema_version` must be `"2.1"`
-- `evidence` and `inference` are both required objects
+- `evidence` and `inference` are both required
 - `best_candidate_route_id` must be a route id from `rules/routes.yaml`
 - No private business context
 
-## What good contributions look like
+---
 
-A good contribution preserves the real AI journey:
-- what task was being attempted
-- which tool path was taken
-- what symptom appeared
-- what alternatives existed
-- what action resolved or improved the situation
+## Human contribution paths
 
-## Adding a case
+Humans may submit cases through:
+- GitHub Issue using the case report template (fallback path)
+- Direct PR adding a JSON file to `cases/` (maintainer path)
+- Schema / taxonomy / validation improvements (maintenance path)
 
-1. Copy `cases/templates/case.example.json` as a starting point
-2. Fill in the fields following `docs/INTAKE_CARD.md`
-3. Validate: `python3 scripts/validate_case.py --input your-case.json`
-4. Rebuild index: `python3 scripts/build_index.py`
-5. Commit the case file
+These are **exception paths**, not the default. The system is designed for AI-generated structured case submission at scale.
+
+---
+
+## What makes a good contribution
+
+A good contribution — whether from AI or human — preserves the real AI journey:
+
+- **Preserve the stuck journey.** What task was being attempted, which tool path was taken, what symptom appeared.
+- **Evidence first, diagnosis second.** Do not collapse symptom into diagnosis too early. The evidence layer must be fillable from observable facts alone.
+- **Route id over tool brand.** Recommend `switch_to_alternative_tool_path`, not "use playwright-mcp". Route ids are stable; tool names are not.
+- **Explain the mismatch, not the failure.** `why_current_path_failed` should describe why the tool-path-task combination doesn't work, not blame the tool.
+- **Under-specify rather than invent.** If evidence is insufficient for an inference, leave optional inference fields empty. Polluted inference is worse than missing inference.
+
+---
+
+## Validation
+
+All cases must pass validation before entering the library:
+
+```bash
+# Validate a case file
+python3 scripts/validate_case.py --input your-case.json
+
+# Normalize a v2.0 case to v2.1
+python3 scripts/validate_case.py --input old-case.json --normalize
+
+# Rebuild the index
+python3 scripts/build_index.py
+
+# Run all checks
+python3 scripts/ci_self_test.py
+```
+
+Validation checks:
+- schema conformance (required fields, types, enums)
+- route id validity (must exist in `rules/routes.yaml`)
+- journey stage and problem family consistency with rules
+- no unknown fields
+
+---
+
+## Adding a new route to the registry
+
+Routes are defined in `rules/routes.yaml`. To add a new route:
+
+1. Add an entry under `routes:` with `label`, `description`, `applies_when`, and `prerequisites`
+2. Add the route id to the enum in `schema/case.schema.json` → `inference.best_candidate_route_id`
+3. Run `python3 scripts/ci_self_test.py` to verify consistency
+
+---
 
 ## Development
 
@@ -51,15 +99,6 @@ cd AgentRX
 
 # Run all checks
 python3 scripts/ci_self_test.py
-
-# Validate a single case
-python3 scripts/validate_case.py --input cases/templates/case.example.json
-
-# Rebuild index
-python3 scripts/build_index.py
-
-# Normalize a v2.0 case to v2.1
-python3 scripts/validate_case.py --input old-case.json --normalize
 ```
 
 ## Code Style

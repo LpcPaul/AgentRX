@@ -2,9 +2,13 @@
 
 ## What this is
 
-The intake card is the bridge between an AI agent's stuck state and the AgentRX case library.
+The intake card is a **machine-usable translation layer** that lets an AI agent convert a messy stuck state into structured evidence and inference.
 
-It forces the agent to translate its subjective experience into a structured, queryable format.
+It is **not a form for human operators**.
+
+Humans may inspect the card, but they are not the primary filler of this card.
+If a human reads it, that is secondary.
+The card exists so AI can think and retrieve in a stable, machine-consumable format.
 
 ## Core principle: Evidence before Inference
 
@@ -87,7 +91,7 @@ What was already tried. This prevents looped retries.
 
 ## Part 2: Inference
 
-Inference is the AI's interpretation of the evidence. It is **re-computable** — a different agent reading the same evidence might reach a different inference.
+Inference is the AI's interpretation of the evidence. It is **re-computable** — a different AI reading the same evidence might reach a different inference.
 
 ### journey_stage
 Where in the task journey is the blockage?

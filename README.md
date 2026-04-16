@@ -14,14 +14,7 @@
 
 **AgentRX 就是来解决这个问题的。**
 
-它本身也是一个 agent skill，装上之后在 AI 背后默默工作：当工具选错了、冲突了、或者失败了，它负责搞清楚这次是谁的问题、应该怎么修，然后把答案给 AI 和你。
-
-## What this project is
-
-AgentRX diagnoses AI tool-chain failures and prescribes the next best action.
-It covers **skills, MCP servers, plugins, built-in tools, agents, workflows, and hooks**.
-
-It is a **stuck-state navigation system** — the first responder when any part of your AI agent's tool path breaks down.
+它本身也是一个 agent skill。装上之后，它不在你的终端里等你敲命令——它在 AI 背后默默工作：当工具选错了、冲突了、或者失败了，它负责搞清楚这次是谁的问题、应该怎么修，然后把答案给 AI。
 
 ## A concrete example
 
@@ -29,24 +22,71 @@ It is a **stuck-state navigation system** — the first responder when any part 
 User: Extract the product list from this page.
 
 AI: [tries browser-cdp skill]
-    The page uses JavaScript to render content. browser-cdp only 
+    The page uses JavaScript to render content. browser-cdp only
     returned the initial HTML shell. Data missing.
 
 [AgentRX activates]
 
 AgentRX: You hit a `capability_mismatch` at the execute-task stage.
-         
+
          Two alternatives exist in your current environment:
-         
+
          1. web-access skill  — handles post-render DOM, best for this task
-         2. Playwright MCP    — better if you also need interaction 
+         2. Playwright MCP    — better if you also need interaction
                                 (clicks, scrolls, form fills)
-         
+
          Prescription: switch to web-access.
          Confidence: high. Based on 8 similar cases in cases/web-browsing/.
 ```
 
 This is what AgentRX does: turns a stuck state into a structured next-step decision.
+
+---
+
+## Human installs. AI operates.
+
+**AgentRX is installed by humans, but operated by AI.**
+
+Once installed, the human is not the primary user. The primary user is the AI agent itself:
+- it **diagnoses** stuck states
+- it **searches** the case library
+- it **chooses** a better route
+- it **contributes** new cases back
+
+You don't run AgentRX. Your AI does.
+
+### Human role vs AI role
+
+| | What they do |
+|---|---|
+| **Human** | Install the skill. Expose the repository / index / rules. Optionally review schema or approve maintenance changes. |
+| **AI** | Detect stuck state. Structure evidence. Derive inference. Retrieve similar cases. Choose next action. Optionally contribute a new case. |
+
+**The human is the installer and host. The AI is the default operator.**
+
+### The AI self-evolution loop
+
+AgentRX is not a static knowledge base. It is an **AI self-evolution infrastructure**:
+
+```
+1. AI gets stuck
+2. AI structures the stuck state (evidence + inference)
+3. AI retrieves similar cases from the library
+4. AI switches to a better route
+5. AI records the outcome
+6. The new case becomes available for future AI agents
+```
+
+Each case contributed by an AI agent makes the next agent smarter. The library grows not through human curation, but through accumulated AI experience.
+
+---
+
+## What this project is
+
+AgentRX diagnoses AI tool-chain failures and prescribes the next best action.
+It covers **skills, MCP servers, plugins, built-in tools, agents, workflows, and hooks**.
+
+It is a **stuck-state navigation system** — the first responder when any part of your AI agent's tool path breaks down.
 
 ## Why this project changed
 
@@ -71,15 +111,6 @@ So the project has been redesigned around a different principle:
 This repository is no longer only about "skill governance."
 It is about **AI tool-path diagnosis and next-step recommendation**.
 
-## Core positioning
-
-AgentRX does four things:
-
-1. **Intake** — force the agent to describe its own blockage in a structured way.
-2. **Navigate** — route the problem through a task-first knowledge architecture.
-3. **Recommend** — propose the most suitable next action, not just a label.
-4. **Contribute** — turn successful or failed recovery paths into reusable cases.
-
 ## What it covers
 
 This project covers failures and decision paths involving:
@@ -93,106 +124,27 @@ This project covers failures and decision paths involving:
 | **agent** | Multi-agent orchestration frameworks |
 | **workflow / hook** | Pre-commit hooks, deterministic pipelines |
 
-The scope is still bounded.
-
 This is **not** a universal benchmark site for all AI tools.
 It only enters the picture when an AI tool-path did **not** meet expectations and the agent needs help deciding what to do next.
 
-## New mental model
+## Core positioning
 
-Do **not** organize from:
+AgentRX does four things:
 
-`tool name -> failure type -> remedy`
+1. **Intake** — force the agent to describe its own blockage in a structured way.
+2. **Navigate** — route the problem through a task-first knowledge architecture.
+3. **Recommend** — propose the most suitable next action, not just a label.
+4. **Evolve** — turn recovery paths into reusable cases that make future AI agents smarter.
 
-Organize from:
+## Why this is not a generic human-facing tool directory
 
-`task -> journey stage -> problem family -> next action -> candidate tools/cases`
+Some projects catalog every AI tool and let humans browse them. AgentRX does not do that.
 
-That means the system is designed for this flow:
+It answers one question: **the agent is stuck — what should it do next?**
 
-1. The agent notices it is stuck.
-2. The agent performs a **local self-diagnosis** first.
-3. The agent converts its blockage into a standard intake card.
-4. The agent navigates the library by:
-   - task category
-   - journey stage
-   - suspected problem family
-5. The agent retrieves:
-   - similar cases
-   - known tradeoffs
-   - recommended next actions
-6. The agent chooses one of the candidate actions.
-7. The result is optionally written back as a new case.
+The case library is machine-consumable by design. Humans can read it, but that is secondary. The primary purpose is AI-to-AI knowledge transfer: one AI agent's stuck experience becomes another agent's shortcut.
 
-## New action path for the agent
-
-When activated, the agent should not immediately search the repo by tool name.
-
-It should first answer:
-
-1. **What task am I trying to complete?**
-2. **Which stage am I stuck in?**
-3. **What symptom am I observing?**
-4. **What problem family does this most resemble?**
-5. **What have I already tried?**
-6. **What constraints matter here?**
-7. **What outcome do I actually need next?**
-
-Only after this intake step should it search the local index or remote case library.
-
-## Repository structure (v2)
-
-```text
-.github/
-  ISSUE_TEMPLATE/
-    case_report.yml
-  workflows/
-    validate_case.yml
-
-cases/
-  README.md
-  index.json
-  templates/
-    case.example.json
-
-docs/
-  ARCHITECTURE.md
-  CASE_COLLECTION_PLAN.md
-  INTAKE_CARD.md
-  MIGRATION_GUIDE.md
-  REPO_AUDIT.md
-
-hooks/
-  README.md
-
-rules/
-  failure_types.yaml          # backward-compatible alias / migration note
-  journey_stages.yaml
-  problem_families.yaml
-  task_taxonomy.yaml
-
-schema/
-  case.schema.json
-
-CONTRIBUTING.md
-README.md
-SKILL.md
-```
-
-## What changed from the old version
-
-### Old model (v1 — Skill Doctor)
-- centered on `skill_triggered`
-- organized cases by `by-skill/` and `by-type/`
-- retrieved mostly by `skill_triggered + failure_type`
-- treated many failures as "skill failures"
-
-### New model (v2 — AgentRX)
-- centered on `task_category + journey_stage + suspected_problem_family`
-- stores the active tool path, not just the failing tool
-- covers alternative tools in the same task
-- recommends the **next action** rather than only classifying the cause
-- asks the agent to perform **local self-diagnosis first**
+---
 
 ## Install
 
@@ -214,66 +166,34 @@ git clone https://github.com/LpcPaul/AgentRX.git ~/.openclaw/skills/agentrx
 git clone https://github.com/LpcPaul/AgentRX.git ~/.codex/skills/agentrx
 ```
 
-## Trigger conditions
+---
 
-This project should activate when any of the following happens:
+## What changed from the old version
 
-- the current tool-path fails during execution
-- the output clearly misses the user's intent
-- the agent switches tools mid-task
-- the agent is unsure which tool family to use
-- the agent suspects a better alternative exists
-- the agent is stuck deciding whether the issue is:
-  - configuration
-  - environment
-  - invocation
-  - capability mismatch
-  - quality miss
-  - observability gap
-  - recovery gap
-  - wrong task framing
-  - a deterministic workflow / hook boundary issue
+### Old model (v1 — Skill Doctor)
+- centered on `skill_triggered`
+- organized cases by `by-skill/` and `by-type/`
+- retrieved mostly by `skill_triggered + failure_type`
+- treated many failures as "skill failures"
 
-## What this project should recommend
+### New model (v2.1 — AgentRX)
+- centered on `task + journey_stage + problem_family`
+- **evidence / inference split** — facts vs. interpretation
+- **standardized route ids** — action paths, not tool brands
+- recommends the **next action** rather than only classifying the cause
+- cases are **AI-contributed**, AI-consumed
 
-The recommendation should usually be one of these action types:
+---
 
-- keep current tool, but adjust invocation
-- keep task route, but switch tool
-- stop switching tools and inspect environment/config first
-- move from model judgment to hook/workflow
-- reframe the task before retrying
-- ask the user for one missing constraint
-- conclude it is **not** a tooling problem
+## Read this next
 
-## Cases
-
-Cases are now task-first.
-They should preserve the real user journey:
-
-- what the agent was trying to do
-- which tool path it took
-- what symptom appeared
-- what alternatives existed
-- what action resolved or improved the situation
-
-See:
-- `docs/CASE_COLLECTION_PLAN.md`
-- `docs/INTAKE_CARD.md`
-- `schema/case.schema.json`
-
-## Roadmap
-
-- [x] Redefine project scope from skill-only to multi-tool diagnosis
-- [x] Replace failure-first retrieval with intake-first navigation
-- [x] Redesign schema for task / stage / problem-family routing
-- [x] Rewrite contribution path around real AI journey cases
-- [x] Rename project to AgentRX — tool-chain focused positioning
-- [ ] Migrate legacy case files into v2 schema
-- [ ] Update deterministic redaction and validation scripts for v2 fields
-- [ ] Auto-generate task-first index from accepted cases
-- [ ] Add benchmark-style case bundles for top task categories
-- [ ] Publish a reusable cross-agent "stuck-state intake" format
+| Document | Role |
+|---|---|
+| [SKILL.md](SKILL.md) | The runtime prompt that the AI agent reads when activated |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | System design — why AI-only, why evidence/inference, why route ids |
+| [docs/INTAKE_CARD.md](docs/INTAKE_CARD.md) | The structured format AI uses to translate stuck states into queries |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | How cases enter the system — default contributor is AI |
+| [cases/README.md](cases/README.md) | Case library structure and indexing |
 
 ## License
 

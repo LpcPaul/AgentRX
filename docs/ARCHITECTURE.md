@@ -9,14 +9,21 @@ It is a machine-to-machine knowledge layer that turns messy failures into struct
 
 ## Audience
 
-**Primary: AI agents** (consumers and contributors)
-**Secondary: humans** (reviewers and schema designers)
+**Primary: AI agents** (runtime consumers and case contributors)
+**Human role: installers, repository hosts, and occasional maintainers**
 
-This audience choice drives every design decision:
-- We optimize for **machine retrieval precision**, not human browsing comfort
-- We optimize for **inference pollution control**, not contribution ease
-- We use **standardized route ids**, not free-text tool names
-- We split **evidence from inference**, because AI needs to know what is fact vs. interpretation
+This is not "primary user, secondary user." It is:
+- AI runs the system.
+- Humans install it, host the repository, and maintain the schema and rules.
+
+The repository may be discovered by humans, but the runtime consumer is AI.
+
+### Why README still starts with human pain
+
+Because installation is a human decision, but operation is not.
+The README first screen serves humans deciding whether to install.
+The system itself serves AI agents after installation.
+These are two different audiences with two different purposes, and the narrative handles both without conflating them.
 
 ## The old approach (v1)
 
@@ -152,6 +159,18 @@ v2.0 flat cases are supported through:
 - `scripts/validate_case.py --normalize` converts v2.0 to v2.1
 - `scripts/build_index.py` reads both formats and normalizes on-the-fly
 - `legacy_mapping` field preserves the original structure for reference
+
+## Case Library Growth
+
+The case library is designed to be expanded **primarily by AI-generated cases**.
+Human review is optional governance, not the main growth mechanism.
+
+When the system works as intended:
+1. AI agents encounter stuck states during normal operation
+2. AgentRX helps them recover
+3. Recovered cases are contributed back as structured evidence + inference
+4. The library grows organically, covering more task-stage-problem combinations
+5. Future agents benefit from accumulated experience
 
 ## Execution Scripts
 
