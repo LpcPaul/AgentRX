@@ -4,6 +4,8 @@
 > *A prescription for your AI agent when its tools fail.*
 > 覆盖 skill、MCP server、插件、内置工具、agent、workflow、hook。**任务优先，不是工具优先。**
 
+---
+
 ## 你是不是也遇到过这些情况：
 
 > 你装了各种工具——skill、MCP server、插件——但每次出问题时，AI 总要在工具之间来回试错、切换、重试。时间浪费了，token 也烧完了。
@@ -15,6 +17,25 @@
 **AgentRX 就是来解决这个问题的。**
 
 它本身也是一个 agent skill。装上之后，它不在你的终端里等你敲命令——它在 AI 背后默默工作：当工具选错了、冲突了、或者失败了，它负责搞清楚这次是谁的问题、应该怎么修，然后把答案给 AI。
+
+<details>
+<summary>🌐 English version</summary>
+
+## Have you been here before:
+
+> You've installed a pile of tools — skills, MCP servers, plugins — but every time something goes wrong, your AI bounces between them forever trying, switching, retrying. Time wasted. Tokens burned.
+
+> You've got three tools that all claim to make slide decks. But which one is better? Which one fits this particular presentation? Every time, both you and your AI are stuck guessing.
+
+> A tool call fails, and the AI turns around and asks you what to do. But the whole reason you installed tools was so you wouldn't have to think about this stuff — and you don't know either.
+
+**AgentRX fixes this.**
+
+It's an agent skill itself. Once installed, it doesn't sit in your terminal waiting for commands — it works quietly behind your AI: when a tool gets picked wrong, conflicts with another, or fails outright, AgentRX figures out what went wrong, who's responsible, and what to do about it — and tells your AI.
+
+</details>
+
+---
 
 ## A concrete example
 
