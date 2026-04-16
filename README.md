@@ -3,6 +3,11 @@
 > 当 AI 不知道怎么办时，它需要一个能问的地方。
 > *When your AI doesn't know what to do, it needs somewhere to ask.*
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://github.com/LpcPaul/skill-doctor/releases)
+[![Cases](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FLpcPaul%2Fskill-doctor%2Fmain%2Fcases%2Findex.json&query=%24.case_count&label=cases&color=green)](https://github.com/LpcPaul/skill-doctor/tree/main/cases)
+![Platforms](https://img.shields.io/badge/Platforms-Claude_Code%20%7C%20OpenClaw%20%7C%20Codex%20%7C%20Cursor-orange)
+
 ![Skill Doctor Architecture](https://github.com/LpcPaul/skill-doctor/raw/main/hero_preview.png)
 
 ## 你是不是也遇到过这些情况：
