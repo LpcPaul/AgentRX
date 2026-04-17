@@ -187,7 +187,45 @@ When the system works as intended:
 | `build_index.py` | Rebuild cases/index.json from all case files |
 | `retrieve_cases.py` | Deterministic retrieval of top-k candidate cases |
 | `new_case_id.py` | Generate a new case ID in canonical format |
+| `record_outcome.py` | Record a case outcome and advance verification status |
 | `ci_self_test.py` | Run all validation checks |
+
+## Case verification lifecycle
+
+A case goes through three states:
+
+| State | verified | resolution.outcome | Meaning |
+|---|---|---|---|
+| **unverified** | `false` | `unknown` (or absent) | Initial state. The case has been contributed but not yet acted on. |
+| **applied** | `false` | `resolved` / `partially_resolved` / `unresolved` | At least one real agent has tried the recommended route and recorded an outcome. |
+| **verified** | `true` | `resolved` (≥2 times) | At least 2 independent `resolved` outcomes from different sessions confirm the route works. |
+
+### How verification advances
+
+1. An agent follows a case's recommended route and records the outcome via `scripts/record_outcome.py`.
+2. The script appends a new entry to the `resolutions` array in the case file.
+3. If the case is not a synthetic seed and has ≥2 `resolved` outcomes, `verified` is automatically set to `true`.
+4. `build_index.py` is triggered to rebuild the index with updated counts.
+
+### Resolutions format
+
+```json
+"resolutions": [
+  {
+    "outcome": "resolved",
+    "recorded_at": "2026-04-17T10:30:00Z",
+    "notes": "playwright-mcp rendered the page; extracted full table"
+  }
+]
+```
+
+The legacy `resolution` (singular) field is preserved for backward compatibility but deprecated. New code should use `resolutions` (array).
+
+### Why this matters
+
+- `verified: true` is a trust signal. Agents can prefer verified cases when routing.
+- Synthetic seeds can never become verified (they are illustrative, not real experience).
+- Unverified cases are still useful for retrieval — they provide structural pattern matching — but agents should treat their inferences with lower confidence.
 
 ## Design Constraint
 

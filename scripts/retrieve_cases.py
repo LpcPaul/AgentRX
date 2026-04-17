@@ -30,19 +30,29 @@ ROOT = Path(__file__).resolve().parent.parent
 CASES_DIR = ROOT / "cases"
 
 
-def load_cases(cases_dir: Path) -> list[dict]:
+def load_cases(cases_dir: Path, exclude_seeds: bool = False) -> list[dict]:
     """Load all case JSON files from the cases directory."""
     cases = []
-    for f in sorted(cases_dir.glob("*.json")):
-        if f.name in ("index.json",):
-            continue
-        try:
-            with open(f, "r", encoding="utf-8") as fh:
-                case = json.load(fh)
-                case["_source_file"] = f.name
-                cases.append(case)
-        except (json.JSONDecodeError, IOError):
-            pass
+    # Scan top-level and seeds/ subdirectory
+    scan_paths = [cases_dir]
+    seeds_dir = cases_dir / "seeds"
+    if seeds_dir.exists():
+        scan_paths.append(seeds_dir)
+
+    for scan_dir in scan_paths:
+        for f in sorted(scan_dir.glob("*.json")):
+            if f.name in ("index.json",):
+                continue
+            try:
+                with open(f, "r", encoding="utf-8") as fh:
+                    case = json.load(fh)
+                    case["_source_file"] = f.name
+                    case["_is_seed"] = case.get("source") == "synthetic-seed" or "seeds" in str(f.parent)
+                    if exclude_seeds and case["_is_seed"]:
+                        continue
+                    cases.append(case)
+            except (json.JSONDecodeError, IOError):
+                pass
     return cases
 
 
@@ -142,7 +152,7 @@ def score_case(intake: dict, candidate: dict) -> dict[str, Any]:
     }
 
 
-def retrieve(intake: dict, cases: list[dict], top_k: int) -> list[dict]:
+def retrieve(intake: dict, cases: list[dict], top_k: int, exclude_seeds: bool = False) -> list[dict]:
     """Retrieve top-k candidate cases."""
     scored = []
     for candidate in cases:
@@ -165,6 +175,7 @@ def retrieve(intake: dict, cases: list[dict], top_k: int) -> list[dict]:
             "confidence": scoring["confidence"],
             "score": scoring["score"],
             "matched_on": scoring["matched_on"],
+            "is_seed": candidate.get("_is_seed", False),
         }
         if scoring.get("env_match_info"):
             result["environment_match"] = scoring["env_match_info"]
@@ -189,6 +200,10 @@ def main():
         "--cases-dir", default=None,
         help="Path to the cases directory (default: ./cases/)"
     )
+    parser.add_argument(
+        "--exclude-seeds", action="store_true",
+        help="Exclude synthetic-seed cases from retrieval"
+    )
     args = parser.parse_args()
 
     intake_path = Path(args.intake)
@@ -208,12 +223,12 @@ def main():
         print(f"ERROR: Cases directory not found: {cases_dir}", file=sys.stderr)
         sys.exit(1)
 
-    cases = load_cases(cases_dir)
+    cases = load_cases(cases_dir, args.exclude_seeds)
     if not cases:
         print("No cases found in the case library.", file=sys.stderr)
         sys.exit(1)
 
-    results = retrieve(intake, cases, args.top_k)
+    results = retrieve(intake, cases, args.top_k, args.exclude_seeds)
 
     print(json.dumps(results, indent=2, ensure_ascii=False))
 

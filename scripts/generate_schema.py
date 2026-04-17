@@ -278,7 +278,7 @@ def generate_schema() -> dict:
             },
             "resolution": {
                 "type": "object",
-                "description": "What happened after the recommendation was applied.",
+                "description": "(Deprecated, use resolutions array) What happened after the recommendation was applied.",
                 "properties": {
                     "outcome": {
                         "type": "string",
@@ -290,6 +290,30 @@ def generate_schema() -> dict:
                     }
                 },
                 "additionalProperties": False
+            },
+            "resolutions": {
+                "type": "array",
+                "description": "History of outcomes recorded for this case.",
+                "items": {
+                    "type": "object",
+                    "required": ["outcome", "recorded_at"],
+                    "properties": {
+                        "outcome": {
+                            "type": "string",
+                            "enum": ["resolved", "partially_resolved", "unresolved"]
+                        },
+                        "recorded_at": {
+                            "type": "string",
+                            "format": "date-time"
+                        },
+                        "notes": {
+                            "type": "string",
+                            "maxLength": 300
+                        }
+                    },
+                    "additionalProperties": False
+                },
+                "maxItems": 50
             },
             "related_cases": {
                 "type": "array",

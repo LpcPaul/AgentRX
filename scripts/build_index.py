@@ -6,7 +6,7 @@ Reads all case JSON files and generates cases/index.json.
 Compatible with both v2.0 (flat) and v2.1 (evidence/inference) structures.
 
 Usage:
-    python3 scripts/build_index.py [--input-dir cases/] [--output cases/index.json]
+    python3 scripts/build_index.py [--input-dir cases/] [--output cases/index.json] [--exclude-seeds]
 
 The index contains:
 - schema_versions: list of schema versions present
@@ -15,6 +15,8 @@ The index contains:
 - route_ids: unique route ids from inference
 - problem_families: unique problem families
 - journey_stages: unique journey stages
+- verified_case_count: number of cases with verified=true
+- synthetic_case_count: number of cases with source=synthetic-seed
 - cases: lightweight entries for retrieval
 """
 
@@ -72,8 +74,20 @@ def map_next_step_to_route(next_step: str) -> str:
     return mapping.get(next_step, "switch_to_alternative_tool_path")
 
 
-def build_index_entry(case: dict) -> dict:
+def _is_seed_file(case_id: str, seeds_dir: Path) -> bool:
+    """Check if a case file lives in the seeds/ subdirectory."""
+    if not seeds_dir.exists():
+        return False
+    for f in seeds_dir.glob("*.json"):
+        if case_id in f.name:
+            return True
+    return False
+
+
+def build_index_entry(case: dict, seeds_dir: Path = None) -> dict:
     """Build a lightweight index entry from a normalized case."""
+    if seeds_dir is None:
+        seeds_dir = Path()
     evidence = case.get("evidence", {})
     inference = case.get("inference", {})
     resolution = case.get("resolution", {})
@@ -118,6 +132,9 @@ def build_index_entry(case: dict) -> dict:
         "outcome": resolution.get("outcome", "unknown"),
         "tags": case.get("tags", []),
         "searchable_text": searchable_text,
+        "verified": case.get("verified", False),
+        "source": case.get("source", "unknown"),
+        "is_seed": case.get("source") == "synthetic-seed" or _is_seed_file(normalized.get("id", ""), seeds_dir),
     }
 
 
@@ -125,10 +142,12 @@ def main():
     parser = argparse.ArgumentParser(description="Build AgentRX case index")
     parser.add_argument("--input-dir", default=str(REPO_ROOT / "cases"), help="Directory to scan for case files")
     parser.add_argument("--output", default=str(REPO_ROOT / "cases" / "index.json"), help="Output index file path")
+    parser.add_argument("--exclude-seeds", action="store_true", help="Exclude synthetic-seed cases from the index")
     args = parser.parse_args()
 
     input_dir = Path(args.input_dir)
     output_path = Path(args.output)
+    seeds_dir = input_dir / "seeds"
 
     # Collect all case files
     case_files = []
@@ -177,7 +196,7 @@ def main():
                 if route_id:
                     route_counts[route_id] += 1
 
-                all_entries.append(build_index_entry(normalized))
+                all_entries.append(build_index_entry(normalized, seeds_dir))
 
         except (json.JSONDecodeError, KeyError) as e:
             print(f"  SKIP {cf.name}: {e}")
@@ -188,6 +207,14 @@ def main():
     route_ids.discard("")
     problem_families.discard("")
     journey_stages.discard("")
+
+    # Filter out seeds if requested
+    if args.exclude_seeds:
+        all_entries = [e for e in all_entries if not e.get("is_seed", False)]
+
+    # Compute provenance counts
+    verified_count = sum(1 for c in all_entries if c.get("verified") is True)
+    synthetic_count = sum(1 for c in all_entries if c.get("source") == "synthetic-seed")
 
     # Build index
     index = {
@@ -207,6 +234,8 @@ def main():
         "problem_families": sorted(problem_families),
         "journey_stages": sorted(journey_stages),
         "case_count": len(all_entries),
+        "verified_case_count": verified_count,
+        "synthetic_case_count": synthetic_count,
         "cases": all_entries,
     }
 
@@ -215,6 +244,8 @@ def main():
 
     print(f"Index built: {output_path}")
     print(f"  Cases: {len(all_entries)}")
+    print(f"  Verified: {verified_count}")
+    print(f"  Synthetic: {synthetic_count}")
     print(f"  Schema versions: {sorted(schema_versions)}")
     print(f"  Tasks: {len(task_categories)}")
     print(f"  Route ids: {len(route_ids)}")
