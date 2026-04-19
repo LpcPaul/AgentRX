@@ -42,27 +42,22 @@ CASES_DIR = ROOT / "cases"
 
 
 def load_cases(cases_dir: Path, exclude_seeds: bool = False) -> list[dict]:
-    """Load all case JSON files from the cases directory."""
+    """Load all case JSON files from the cases directory (recursive)."""
     cases = []
-    scan_paths = [cases_dir]
-    seeds_dir = cases_dir / "seeds"
-    if seeds_dir.exists():
-        scan_paths.append(seeds_dir)
-
-    for scan_dir in scan_paths:
-        for f in sorted(scan_dir.glob("*.json")):
-            if f.name in ("index.json",):
-                continue
-            try:
-                with open(f, "r", encoding="utf-8") as fh:
-                    case = json.load(fh)
-                    case["_source_file"] = f.name
-                    case["_is_seed"] = case.get("source") == "synthetic-seed" or "seeds" in str(f.parent)
-                    if exclude_seeds and case["_is_seed"]:
-                        continue
-                    cases.append(case)
-            except (json.JSONDecodeError, IOError):
-                pass
+    for f in sorted(cases_dir.rglob("*.json")):
+        # Skip index.json, template files, and hidden files
+        if f.name == "index.json" or "templates" in str(f) or f.stem.startswith("."):
+            continue
+        try:
+            with open(f, "r", encoding="utf-8") as fh:
+                case = json.load(fh)
+                case["_source_file"] = f.name
+                case["_is_seed"] = case.get("source") == "synthetic-seed" or "seeds" in str(f.parent)
+                if exclude_seeds and case["_is_seed"]:
+                    continue
+                cases.append(case)
+        except (json.JSONDecodeError, IOError):
+            pass
     return cases
 
 

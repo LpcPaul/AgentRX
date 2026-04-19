@@ -122,8 +122,7 @@ jobs:
           script: |
             const comment = '## AgentRX — Case Validation (v2.1)\n\n'
               + '❌ No fenced JSON block found in the issue body.\n\n'
-              + '**AgentRX now accepts complete v2.1 JSON only.** Human fallback / form-to-JSON assembly is no longer supported.\n\n'
-              + 'Please paste a complete v2.1 case JSON in the `full_case_json` field.\n'
+              + '**AgentRX accepts complete v2.1 JSON only.** Please paste a fenced JSON block directly in the issue body.\n\n'
               + 'See `schema/case.schema.json` for the full schema.';
 
             await github.rest.issues.createComment({

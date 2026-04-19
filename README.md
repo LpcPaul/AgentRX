@@ -87,11 +87,12 @@ git clone https://github.com/LpcPaul/AgentRX.git ~/.codex/skills/agentrx
 
 ```
 1. AI gets stuck (concrete failure signal)
-2. AI structures the stuck state (evidence + inference)
+2. AI collects evidence (task, attempted_path, symptom)
 3. AI retrieves similar cases via retrieve_cases.py
-4. AI chooses a route based on retrieved cases + rules/routes.yaml
-5. AI records the outcome
-6. The new case becomes available for future AI agents
+4. AI generates inference based on evidence + retrieved cases
+5. AI chooses a route based on retrieved cases + rules/routes.yaml
+6. AI records the outcome
+7. The new case becomes available for future AI agents
 ```
 
 ### Human installs. AI operates.
