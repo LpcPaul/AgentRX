@@ -228,15 +228,25 @@ try:
          "--output", str(temp_cases_dir / "index.json")],
         capture_output=True, text=True
     )
-    shutil.rmtree(temp_cases_dir, ignore_errors=True)
     check(result.returncode == 0, f"build_index.py handles non-seed case without crash (exit={result.returncode})")
     if result.returncode == 0:
-        with open(temp_cases_dir / "index.json" if False else "/dev/null") as _:
-            pass  # already cleaned up
-        # Also verify the output contains expected fields
+        idx_path = temp_cases_dir / "index.json"
+        with open(idx_path) as f:
+            idx = json.load(f)
+        # Verify index content correctness, not just exit code
+        entry = next((c for c in idx["cases"] if c["id"] == "2026-01-01-test-case-001"), None)
+        check(entry is not None, "non-seed case appears in index entries")
+        if entry:
+            check(entry.get("verified") is False, "index entry carries verified=False")
+            check(entry.get("source") == "test", "index entry carries source field")
+            check(entry.get("is_seed") is False, "non-seed case marked is_seed=False")
+            check(entry.get("outcome") == "unknown", "outcome extracted from resolution fallback")
+        check(idx.get("verified_case_count") == 0, "verified_case_count correct for temp index")
+        check(idx.get("synthetic_case_count") > 0, "synthetic_case_count includes seeds")
         check(True, "build_index.py: is_seed no longer references undefined variable")
     else:
         check(False, f"build_index.py failed: {result.stderr.strip()}")
+    shutil.rmtree(temp_cases_dir, ignore_errors=True)
 except Exception as e:
     check(False, f"build_index.py non-seed regression test failed: {e}")
     if 'temp_cases_dir' in dir():

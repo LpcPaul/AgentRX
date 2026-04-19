@@ -75,10 +75,10 @@ def map_next_step_to_route(next_step: str) -> str:
 
 
 def _is_seed_file(case_id: str, seeds_dir: Path) -> bool:
-    """Check if a case file lives in the seeds/ subdirectory."""
+    """Check if a case file lives in the seeds/ subdirectory (recursive)."""
     if not seeds_dir.exists():
         return False
-    for f in seeds_dir.glob("*.json"):
+    for f in seeds_dir.rglob("*.json"):
         if case_id in f.name:
             return True
     return False
