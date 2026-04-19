@@ -1,0 +1,14 @@
+[
+  {
+    "id": "browser-cdp-001",
+    "status": "draft",
+    "symptom": "CDP connection dropped mid-task",
+    "env": "docker, chromium",
+    "what_worked": "recreate browser context with new CDP endpoint",
+    "what_didnt_work": [
+      "retry on same connection"
+    ],
+    "times_confirmed": 1,
+    "note": "Needs more data — only seen once so far"
+  }
+]

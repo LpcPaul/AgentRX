@@ -1,128 +1,67 @@
 # AgentRX
 
-> 🩺 A task-first stuck-state protocol + deterministic retrieval layer for AI agents.
-> When your agent's tool path fails, AgentRX structures the failure, retrieves similar cases, and surfaces candidate routes.
+> Recovery memory layer for AI tool failures.
+> When your agent's third-party tool path fails, AgentRX surfaces what worked (and what didn't) from prior experience.
 
 ## What is AgentRX?
 
-AgentRX is **not** a human-facing tool directory. It is a **machine-consumable protocol** that answers one question:
+AgentRX is a **recovery experience library** for AI agents. It answers one question:
 
-> **The agent is stuck — what should it do next?**
+> **The agent's tool failed — what did someone else try that worked?**
 
-It provides:
+It focuses on:
+- **Third-party tool failures** — playwright, browser-cdp, web-fetch, MCP connectors, etc.
+- **Environment long-tail issues** — proxy, headless, sandbox, permissions, dependencies
+- **What worked / what didn't** — concrete, actionable recovery guidance
 
-- **Schema** — a standard v2.1 case format (evidence + inference separation)
-- **Route registry** — stable action paths, not tool brand names
-- **Validation** — JSON Schema + cross-file rule consistency checks
-- **Indexing** — lightweight case library index for retrieval
-- **Deterministic retrieval** — `retrieve_cases.py` finds top-k candidate cases
-
-AgentRX does **not** run inference for the agent. Route recommendation is the agent's own reasoning, based on retrieved cases + the route registry.
-
-## A concrete example
-
-```
-User: Extract the product list from this page.
-
-AI: [tries browser-cdp skill]
-    The page uses JavaScript to render content. browser-cdp only
-    returned the initial HTML shell. Data missing.
-
-[AgentRX activates]
-
-AgentRX: Retrieved similar cases → route: switch_to_alternative_tool_path
-
-         Why: current tool captures static HTML only; page requires
-         JavaScript rendering.
-
-         Candidate: playwright-mcp can render the page and extract
-         the full DOM. web_fetch is a lighter option for static pages.
-```
-
----
-
-## What AgentRX provides today
-
-| Component | Status |
-|---|---|
-| Case schema (v2.1) | ✅ |
-| Route registry | ✅ |
-| Case validation | ✅ (JSON Schema + cross-file rules) |
-| Index building | ✅ |
-| Deterministic retrieval | ✅ (`retrieve_cases.py`) |
-| Case ID generation | ✅ (`new_case_id.py`) |
-
-## What AgentRX does **not** provide (yet)
-
-| Component | Status |
-|---|---|
-| Automated case review / merge / publish pipeline | 🚧 planned |
-| Python-based route recommender | ❌ out of scope — agent does its own route inference |
-
----
-
-## Install
-
-### Claude Code
-
-```bash
-git clone https://github.com/LpcPaul/AgentRX.git ~/.claude/skills/agentrx
-```
-
-### OpenClaw / ClawHub
-
-```bash
-git clone https://github.com/LpcPaul/AgentRX.git ~/.openclaw/skills/agentrx
-```
-
-### Codex / Cursor / other skill-compatible runtimes
-
-```bash
-git clone https://github.com/LpcPaul/AgentRX.git ~/.codex/skills/agentrx
-```
-
----
+AgentRX does **not** compete with platform-level recovery (retry, circuit breaker, fallback routing). Those are the platform's job. AgentRX handles what platforms can't cover: real-world tool-specific experience.
 
 ## How it works
 
 ```
-1. AI gets stuck (concrete failure signal)
-2. AI collects evidence (task, attempted_path, symptom)
-3. AI retrieves similar cases via retrieve_cases.py
-4. AI generates inference based on evidence + retrieved cases
-5. AI chooses a route based on retrieved cases + rules/routes.yaml
-6. AI records the outcome
-7. The new case becomes available for future AI agents
+1. Agent's third-party tool fails
+2. Agent tries to recover on its own — fails 2+ times
+3. Agent activates AgentRX skill
+4. Agent describes the failure in natural language
+5. Agent finds the matching tool file in cases/
+6. Agent reads the closest case, focuses on what_worked and what_didnt_work
+7. Agent applies the learned recovery
+8. Agent appends the outcome to ledger.jsonl
 ```
 
-### Human installs. AI operates.
+## Why we are shrinking from v2.1 to MVP
 
-| | What they do |
+The v2.1 architecture (schema validation, route registry, deterministic retrieval) was a well-intentioned infrastructure investment — but it put cart before horse. Before building a retrieval engine, we need to verify: **does case content actually help agents recover?**
+
+This MVP tests that question with minimal infrastructure. If the answer is "yes", we'll grow back the heavy architecture on a proven foundation. If "no", we saved months of wasted engineering.
+
+## MVP does
+
+- A very short SKILL.md that tells the agent when and how to use AgentRX
+- Flat `cases/` directory — one JSON file per tool, containing case arrays
+- `ledger.jsonl` for append-only experience logging
+- Minimal case format: symptom, what_worked, what_didnt_work, times_confirmed
+
+## MVP does not do (yet)
+
+- v2.1 JSON schema validation
+- Route registry / route recommendation
+- Deterministic retrieval scripts
+- Build index / validate / generate scripts as main path
+- Automated hooks triggering
+- Complex directory分层 (by_tool, by_tag, verified, curated, archived)
+- Synthetic seed cases
+
+## Files
+
+| File | Role |
 |---|---|
-| **Human** | Install the skill. Host the repository. Maintain schema/taxonomy. |
-| **AI** | Detect stuck state. Collect evidence. Retrieve similar cases. Choose a route. Optionally contribute a new case. |
-
-**AI contributors must submit complete v2.1 JSON.** Human fallback / form-to-JSON assembly is no longer supported.
-
----
-
-## Read this next
-
-| Document | Role |
-|---|---|
-| [SKILL.md](SKILL.md) | The runtime protocol the AI agent reads when activated |
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | System design — why evidence/inference, why route ids |
-| [docs/INTAKE_CARD.md](docs/INTAKE_CARD.md) | The structured intake card format |
-| [CONTRIBUTING.md](CONTRIBUTING.md) | How cases enter the system — JSON-only contribution path |
-| [cases/README.md](cases/README.md) | Case library structure and indexing |
-
-## Developer validation
-
-```bash
-pip install -r requirements-dev.txt
-python3 scripts/ci_self_test.py
-python3 scripts/build_index.py
-```
+| [SKILL.md](SKILL.md) | Ultra-short runtime protocol the agent reads when activated |
+| [cases/](cases/) | Flat case directory — one JSON file per tool |
+| [ledger.jsonl](ledger.jsonl) | Append-only experience log |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | How to contribute real recovery cases |
+| [docs/MVP.md](docs/MVP.md) | Why we shrank, what we validate, future expansion order |
+| [docs/legacy/](docs/legacy/) | v1→v2.1 architecture exploration (historical reference only) |
 
 ## License
 

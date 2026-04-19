@@ -1,0 +1,3 @@
+{"ts":"2026-04-19T17:05:00Z","tool":"playwright-mcp","symptom":"navigation timeout on SPA, empty DOM","used_case":"playwright-mcp-001","result":"resolved","note":"networkidle fixed it"}
+{"ts":"2026-04-19T18:20:00Z","tool":"playwright-mcp","symptom":"click failed — element obscured","used_case":"playwright-mcp-002","result":"resolved","note":"page.evaluate click worked"}
+{"ts":"2026-04-19T19:10:00Z","tool":"web-fetch","symptom":"SSL certificate error on target site","used_case":null,"result":"unresolved","note":"no matching case, site has self-signed cert"}

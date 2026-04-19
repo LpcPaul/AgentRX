@@ -1,0 +1,28 @@
+[
+  {
+    "id": "playwright-mcp-001",
+    "status": "verified",
+    "symptom": "navigation timeout on SPA, empty DOM returned",
+    "env": "linux, headless, proxy",
+    "what_worked": "set waitUntil=networkidle and timeout=30s",
+    "what_didnt_work": [
+      "retry with same params",
+      "switch to browser-cdp immediately"
+    ],
+    "times_confirmed": 3,
+    "note": "Often happens on JS-heavy pages behind proxy"
+  },
+  {
+    "id": "playwright-mcp-002",
+    "status": "verified",
+    "symptom": "click failed — element obscured by overlay",
+    "env": "macOS, headed",
+    "what_worked": "use page.evaluate to click via JS, or dismiss overlay first",
+    "what_didnt_work": [
+      "retry click multiple times",
+      "force: true without checking overlay"
+    ],
+    "times_confirmed": 2,
+    "note": "Common on pages with cookie banners or modals"
+  }
+]
